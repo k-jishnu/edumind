@@ -1,0 +1,208 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with gamification stats",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "xp": { "type": "integer" },
+        "streak": { "type": "integer" },
+        "level": { "type": "integer" },
+        "lastActive": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "role": { "type": "string", "enum": ["user", "admin"] }
+      },
+      "required": ["uid", "email", "xp", "streak", "level"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "Raw notes or topics entered by the user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "content": { "type": "string" },
+        "topic": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "content", "topic"]
+    },
+    "Lesson": {
+      "title": "Lesson",
+      "description": "AI-generated lesson content",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "noteId": { "type": "string" },
+        "topic": { "type": "string" },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "explanation": { "type": "string" },
+        "keyPoints": { "type": "array", "items": { "type": "string" } },
+        "examples": { "type": "array", "items": { "type": "string" } },
+        "examNotes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "topic", "title", "summary", "explanation"]
+    },
+    "Quiz": {
+      "title": "Quiz",
+      "description": "AI-generated quiz questions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "userId": { "type": "string" },
+        "topic": { "type": "string" },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "options": { "type": "array", "items": { "type": "string" } },
+              "correctAnswer": { "type": "string" },
+              "explanation": { "type": "string" },
+              "difficulty": { "type": "string" }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "topic", "questions"]
+    },
+    "QuizResult": {
+      "title": "Quiz Result",
+      "description": "Record of a user taking a quiz",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "quizId": { "type": "string" },
+        "userId": { "type": "string" },
+        "topic": { "type": "string" },
+        "score": { "type": "integer" },
+        "total": { "type": "integer" },
+        "difficulty": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "quizId", "score", "total"]
+    },
+    "StudyPlan": {
+      "title": "Study Plan",
+      "description": "AI-generated day-wise study schedule",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "goal": { "type": "string" },
+        "schedule": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "day": { "type": "string" },
+              "tasks": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "goal", "schedule"]
+    },
+    "Progress": {
+      "title": "Progress",
+      "description": "Learning progress tracking per topic",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "topic": { "type": "string" },
+        "masteryScore": { "type": "integer" },
+        "lastAttemptAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "topic", "masteryScore"]
+    },
+    "UploadedFile": {
+      "title": "Uploaded File",
+      "description": "Metadata for user-uploaded study materials",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "fileName": { "type": "string" },
+        "fileType": { "type": "string" },
+        "fileSize": { "type": "integer" },
+        "downloadURL": { "type": "string" },
+        "extractedText": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "fileName", "fileType", "downloadURL", "createdAt"]
+    },
+    "FlashcardSet": {
+      "title": "Flashcard Set",
+      "description": "AI-generated flashcards from a file",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fileId": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "cards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "front": { "type": "string" },
+              "back": { "type": "string" },
+              "known": { "type": "boolean" }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fileId", "userId", "cards", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "notes/{noteId}": {
+      "schema": "Note",
+      "description": "User notes"
+    },
+    "lessons/{lessonId}": {
+      "schema": "Lesson",
+      "description": "AI-generated lessons"
+    },
+    "quizzes/{quizId}": {
+      "schema": "Quiz",
+      "description": "AI-generated quizzes"
+    },
+    "quiz_results/{resultId}": {
+      "schema": "QuizResult",
+      "description": "User quiz results"
+    },
+    "study_plans/{planId}": {
+      "schema": "StudyPlan",
+      "description": "AI-generated study plans"
+    },
+    "progress/{progressId}": {
+      "schema": "Progress",
+      "description": "Learning progress tracking"
+    },
+    "uploaded_files/{fileId}": {
+      "schema": "UploadedFile",
+      "description": "User uploaded documents meta"
+    },
+    "flashcard_sets/{setId}": {
+      "schema": "FlashcardSet",
+      "description": "AI generated flashcard sets"
+    }
+  }
+}

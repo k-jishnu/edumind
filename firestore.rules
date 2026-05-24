@@ -1,0 +1,155 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'admin@edumind.ai' ||
+        request.auth.token.email == 'prempsr007@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity Validations
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'xp', 'streak', 'level'])
+        && data.uid == request.auth.uid
+        && data.email is string
+        && data.xp is int
+        && data.streak is int
+        && data.level is int;
+    }
+
+    function isValidNote(data) {
+      return data.userId == request.auth.uid
+        && data.content is string && data.content.size() <= 50000
+        && data.topic is string && data.topic.size() <= 200;
+    }
+
+    function isValidLesson(data) {
+      return data.userId == request.auth.uid
+        && data.topic is string && data.topic.size() <= 200
+        && data.title is string && data.title.size() <= 300
+        && data.summary is string && data.summary.size() <= 2000
+        && data.explanation is string && data.explanation.size() <= 10000;
+    }
+
+    function isValidQuiz(data) {
+      return data.userId == request.auth.uid
+        && data.topic is string
+        && data.questions is list && data.questions.size() <= 20;
+    }
+
+    function isValidQuizResult(data) {
+      return data.userId == request.auth.uid
+        && data.score is int
+        && data.total is int;
+    }
+
+    function isValidStudyPlan(data) {
+      return data.userId == request.auth.uid
+        && data.goal is string
+        && data.schedule is list && data.schedule.size() <= 31;
+    }
+
+    function isValidProgress(data) {
+      return data.userId == request.auth.uid
+        && data.topic is string
+        && data.masteryScore is int;
+    }
+
+    // Collection Rules
+    match /users/{userId} {
+      allow list: if isAdmin();
+      allow get: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if (isOwner(userId) && isValidUser(incoming())) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /notes/{noteId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidNote(incoming());
+      allow update: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin()) && isValidNote(incoming());
+      allow delete: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    match /lessons/{lessonId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidLesson(incoming());
+      allow update: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin()) && isValidLesson(incoming());
+      allow delete: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    match /quizzes/{quizId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidQuiz(incoming());
+      allow update: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin()) && isValidQuiz(incoming());
+      allow delete: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    match /quiz_results/{resultId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidQuizResult(incoming());
+    }
+
+    match /study_plans/{planId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidStudyPlan(incoming());
+      allow update: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin()) && isValidStudyPlan(incoming());
+      allow delete: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    match /progress/{progressId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidProgress(incoming());
+      allow update: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin()) && isValidProgress(incoming());
+    }
+
+    match /uploaded_files/{fileId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+    }
+
+    match /flashcard_sets/{setId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+    }
+  }
+}
