@@ -4,7 +4,7 @@ python-dotenv
 requests
 gTTS
 google-generativeai
-moviepy
+moviepy==2.1.1
 pillow
 imageio
 imageio-ffmpeg
