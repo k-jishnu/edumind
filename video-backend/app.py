@@ -425,7 +425,7 @@ Now generate for the given topic."""
         output_path = os.path.join(OUTPUTS_DIR, output_file_name)
 
         try:
-            from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips
+            from moviepy import ImageClip, AudioFileClip, concatenate_videoclips
 
             print("Progress: building final video clip...")
 

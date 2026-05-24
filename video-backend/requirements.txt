@@ -6,3 +6,9 @@ gTTS
 google-generativeai
 moviepy
 pillow
+imageio
+imageio-ffmpeg
+numpy
+proglog
+decorator
+tqdm
