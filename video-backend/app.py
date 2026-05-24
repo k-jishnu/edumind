@@ -451,7 +451,7 @@ Now generate for the given topic."""
             clips = []
 
             for image_path in image_paths:
-                clip = ImageClip(image_path).set_duration(scene_duration)
+                clip = ImageClip(image_path).with_duration(scene_duration)
                 clips.append(clip)
 
             print(f"Logs: number of clips: {len(clips)}")
@@ -459,7 +459,7 @@ Now generate for the given topic."""
             final_clip = concatenate_videoclips(clips, method="compose")
 
             if audio_path:
-                final_clip = final_clip.set_audio(AudioFileClip(audio_path))
+                final_clip = final_clip.with_audio(AudioFileClip(audio_path))
 
             print(f"Logs: final video duration: {final_clip.duration if hasattr(final_clip, 'duration') else audio_duration} seconds")
 
