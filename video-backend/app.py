@@ -4,7 +4,6 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-
 def generate_real_image(prompt, scene_text, output_path):
     import requests
     import urllib.parse
@@ -509,4 +508,11 @@ Now generate for the given topic."""
 
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=5000, debug=True)
+    import os
+
+    port = int(os.environ.get("PORT", 5000))
+
+    app.run(
+        host='0.0.0.0',
+        port=port
+    )

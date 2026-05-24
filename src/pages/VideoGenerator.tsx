@@ -1,6 +1,7 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
-const VIDEO_API_URL = "http://localhost:5000/generate";
+const VIDEO_API_URL =
+  "https://edu-backend-1-fh7o.onrender.com/generate";
 
 export default function VideoGenerator() {
   const [prompt, setPrompt] = useState("");
@@ -20,17 +21,20 @@ export default function VideoGenerator() {
       setVideoUrl(null);
 
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 300000); // 5 min timeout
+
+      const timeout = setTimeout(() => {
+        controller.abort();
+      }, 300000);
 
       const response = await fetch(VIDEO_API_URL, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          prompt: prompt.trim()
+          prompt: prompt.trim(),
         }),
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeout);
@@ -40,10 +44,12 @@ export default function VideoGenerator() {
 
         try {
           const data = await response.json();
+
           backendError =
             data.details ||
             data.error ||
             backendError;
+
         } catch (e) {
           backendError = "Backend returned an error.";
         }
@@ -58,17 +64,29 @@ export default function VideoGenerator() {
       }
 
       const url = URL.createObjectURL(blob);
+
       setVideoUrl(url);
 
-    } catch (err: any) {
+    } catch (err) {
       console.error("Video generation error:", err);
 
-      if (err.name === "AbortError") {
-        setError("Request timed out. Video generation took too long.");
-      } else if (err.message.includes("Failed to fetch")) {
-        setError("Cannot connect to backend. Make sure Flask is running on http://localhost:5000");
+      const errorObj = err as Error;
+
+      if (errorObj.name === "AbortError") {
+        setError(
+          "Request timed out. Video generation took too long."
+        );
+
+      } else if (
+        errorObj.message &&
+        errorObj.message.includes("Failed to fetch")
+      ) {
+        setError("Cannot connect to deployed backend.");
+
       } else {
-        setError(err.message || "Unexpected error occurred.");
+        setError(
+          errorObj.message || "Unexpected error occurred."
+        );
       }
 
     } finally {
@@ -79,11 +97,16 @@ export default function VideoGenerator() {
   return (
     <div className="video-generator-page">
       <div className="video-generator-card">
+
         <div className="video-header">
           <span className="video-icon">🎬</span>
+
           <div>
             <h1>AI Video Generator</h1>
-            <p>Turn any lesson topic into a short learning video.</p>
+
+            <p>
+              Turn any lesson topic into a short learning video.
+            </p>
           </div>
         </div>
 
@@ -95,21 +118,29 @@ export default function VideoGenerator() {
           rows={5}
         />
 
-        {error && <p className="video-error">{error}</p>}
+        {error && (
+          <p className="video-error">
+            {error}
+          </p>
+        )}
 
         <button
           className="video-generate-btn"
           onClick={generateVideo}
           disabled={loading}
         >
-          {loading ? "Generating your video..." : "Generate Video"}
+          {loading
+            ? "Generating your video..."
+            : "Generate Video"}
         </button>
 
         {loading && (
           <div className="video-loading-box">
             <div className="video-loader"></div>
+
             <p>
-              EduMind is creating your learning video. This may take a little time.
+              EduMind is creating your learning video.
+              This may take a little time.
             </p>
           </div>
         )}
@@ -133,6 +164,7 @@ export default function VideoGenerator() {
             </a>
           </div>
         )}
+
       </div>
     </div>
   );
