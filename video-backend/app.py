@@ -10,31 +10,57 @@ def generate_real_image(prompt, scene_text, output_path):
     import requests
     import urllib.parse
     import time
+    from PIL import Image
+    from io import BytesIO
 
     try:
-        print("Sending request to Pollinations AI for image generation...")
-        
-        # Create a highly descriptive prompt for the AI
-        full_prompt = f"{prompt}, {scene_text}, high quality educational illustration, realistic, detailed, 16:9"
+        print("Sending request to Pollinations AI...")
+
+        full_prompt = (
+            f"{prompt}, {scene_text}, "
+            "high quality educational illustration, "
+            "realistic, detailed, 16:9"
+        )
+
         encoded_prompt = urllib.parse.quote(full_prompt)
-        
-        # Use Pollinations AI (free, no key required) with 1280x720 resolution
-        url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1280&height=720&nologo=true"
-        
-        # Add a delay to avoid rate limiting
+
+        url = (
+            f"https://image.pollinations.ai/prompt/"
+            f"{encoded_prompt}"
+            "?width=1280&height=720&nologo=true"
+        )
+
         time.sleep(1)
-        
-        response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 EduMind'})
+
+        response = requests.get(
+            url,
+            headers={
+                "User-Agent": "Mozilla/5.0 EduMind"
+            },
+            timeout=60
+        )
+
         response.raise_for_status()
-        
-        with open(output_path, 'wb') as f:
-            f.write(response.content)
-            
-        print("Real image saved successfully:", output_path)
+
+        # Verify image before saving
+        img = Image.open(BytesIO(response.content))
+
+        # Convert safely
+        img = img.convert("RGB")
+
+        # Resize safely
+        img = img.resize((1280, 720))
+
+        # Save valid PNG
+        img.save(output_path, format="PNG")
+
+        print("Valid image saved:", output_path)
+
         return True
 
     except Exception as e:
-        raise Exception(f"Image generation failed: {e}")
+        print("Pollinations image failed:", e)
+        return False
 
 
 def generate_topic_visual(prompt, scene_text, scene_number, output_path):
@@ -330,8 +356,12 @@ Now generate for the given topic."""
             print(f"Sending request to Pollinations AI for scene {idx + 1}...")
             
             try:
-                generate_real_image(prompt, scene, image_path)
-                success = True
+    success = generate_real_image(
+        prompt,
+        scene,
+        image_path
+    )
+
             except Exception as e:
                 print(f"Pollinations AI image generation failed: {e}")
                 
